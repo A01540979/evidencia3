@@ -1,7 +1,5 @@
---no-cache-dir
 streamlit==1.26.0
 pandas
 matplotlib
 seaborn
 pillow>=7.1.0,<10
-pip>=24.3.1
