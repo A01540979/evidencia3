@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
 
 # Configuración general de la página
 st.set_page_config(page_title="Ternium - Cuellos de Botella", page_icon="CamporaFavicon.ico", layout="wide")
@@ -55,17 +56,10 @@ col_header, col_image = st.columns([4, 1], gap="medium")
 with col_header:
     st.markdown('<div class="header-bar">Ternium - Dashboard de Cuellos de Botella</div>', unsafe_allow_html=True)
 with col_image:
-    st.image("Evidencia presentación 1.png", width=88)  # Logo reducido
+    st.image("Evidencia presentación 1.png", width=88)
 
 # Cargar CSV
-# Enlace directo del archivo en Google Drive
-url = "https://drive.google.com/uc?id=1ooiYlR1tpfrdT2kkeLYsKbQ_NyYOtIJ5"
-
-try:
-    df = pd.read_csv(url)
-    st.success("Datos cargados exitosamente desde Google Drive")
-except Exception as e:
-    st.error(f"Error al cargar los datos: {e}")
+df = pd.read_csv('BDD_Final.csv')
 
 # Convertir columna a datetime
 if 'Taper fecha_date' in df.columns:
@@ -81,10 +75,12 @@ else:
 
 # Sidebar para filtros y navegación
 with st.sidebar:
-    st.image("Ternium_Logo.svg.png", width=200)  # Ajustado el uso de width
+    st.image("Ternium_Logo.svg.png", width=200) 
     st.header('Navegación')
     st.markdown('[Dashboard de Análisis](#dashboard-de-análisis)', unsafe_allow_html=True)
+    st.markdown('[Línea de tiempo](#linea-de-tiempo)', unsafe_allow_html=True)
     st.markdown('[Datos Filtrados](#datos-filtrados)', unsafe_allow_html=True)
+    
 
     st.header('Filtros')
 
@@ -156,28 +152,90 @@ if "Todos los meses" not in meses_seleccionados:
 if "Todos" not in bottleneck_seleccionados:
     filtered_df = filtered_df[filtered_df['Bottleneck'].isin(bottleneck_seleccionados)]
 
-# Sección de Dashboard de Análisis
+# Sección de Dashboard de Análisis-----------------------------------------------------------------------------------
 st.markdown('<div id="dashboard-de-análisis"></div>', unsafe_allow_html=True)
 st.title("Dashboard de Análisis")
 
-# Función para graficar frecuencia de cuellos de botella con contornos negros en las barras
+# Función para graficar frecuencia de cuellos de botella 
 def plot_bottleneck_frequency(filtered_df, title):
     fig, ax = plt.subplots(figsize=(6, 4))
-    sns.countplot(
+    barplot = sns.countplot(
         data=filtered_df,
         x='Bottleneck',
         palette='YlOrBr',
-        edgecolor='black',  # Contorno negro en las barras
+        edgecolor='black',
         ax=ax
     )
+    
+    for container in barplot.containers:
+        ax.bar_label(container, fmt='%d', label_type='edge', fontsize=10, color='black', padding=3)
+
+    # Configurarción etiquetas
     ax.set_title(title, fontsize=14, color="#FFD700")
     ax.set_xlabel('Bottleneck', fontsize=12)
     ax.set_ylabel('Frecuencia', fontsize=12)
+    
+    # Configurar el estilo del gráfico
     ax.grid(axis='y', linestyle='--', alpha=0.7)
     plt.xticks(rotation=45, fontsize=10)
     plt.yticks(fontsize=10)
     sns.despine(left=True, bottom=True)
+    
     return fig
+
+# Función para graficar frecuencia de los 15 valores más comunes de Delay Concept
+def plot_delay_concept_bubble_optimized(filtered_df, title):
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Obtener los 15 valores más frecuentes
+    top_15_delays = filtered_df['Delay Concept'].value_counts().head(15)
+    top_15_df = pd.DataFrame({
+        'Delay Concept': top_15_delays.index,
+        'Frecuencia': top_15_delays.values
+    })
+
+    # Crear coordenadas para las burbujas distribuidas en un grid
+    x_coords = np.linspace(0, 1, len(top_15_df)) 
+    y_coords = np.linspace(0.3, 0.7, len(top_15_df))  
+    np.random.shuffle(y_coords)  
+
+    
+    bubble_sizes = top_15_df['Frecuencia'] * 8
+
+    scatter = ax.scatter(
+        x=x_coords,
+        y=y_coords,
+        s=bubble_sizes,
+        alpha=0.6,
+        c=sns.color_palette("YlOrBr", len(top_15_df)),
+        edgecolor='black'
+    )
+
+    for i, (label, freq) in enumerate(zip(top_15_df['Delay Concept'], top_15_df['Frecuencia'])):
+        ax.text(
+            x_coords[i], 
+            y_coords[i], 
+            f"{label}\n{freq}", 
+            ha='center', 
+            va='center', 
+            fontsize=8, 
+            color="black", 
+            weight="bold",
+            bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, boxstyle="round,pad=0.3")
+        )
+
+    # Configurar el gráfico
+    ax.set_title(title, fontsize=14, color="#FFD700", pad=20)
+    ax.set_xticks([]) 
+    ax.set_yticks([]) 
+    ax.set_xlim(-0.1, 1.1)  
+    ax.set_ylim(0, 1)
+    ax.grid(False) 
+    sns.despine(left=True, bottom=True)
+
+    return fig
+
+
 # Gráficas
 cols = st.columns(3)
 
@@ -188,24 +246,26 @@ with cols[0]:
     else:
         st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
-for i, col in enumerate(cols[1:], 1):
+with cols[1]:
+    st.subheader("Frecuencia de Delay Concept")
+    if not filtered_df.empty and 'Delay Concept' in filtered_df.columns:
+        st.pyplot(plot_delay_concept_bubble_optimized(filtered_df, "Frecuencia de Delay Concept (Top 15)"))
+    else:
+        st.warning("No hay datos que coincidan con los filtros seleccionados o 'Delay Concept' no está en los datos.")
+
+for i, col in enumerate(cols[2:], 1):
     with col:
         st.subheader(f"Gráfico Falso {i}")
         st.pyplot(plot_bottleneck_frequency(filtered_df, f"Gráfico {i}"))
-
-# Sección de Datos Filtrados
-st.markdown('<div id="datos-filtrados"></div>', unsafe_allow_html=True)
-st.title("Datos Filtrados")
-st.dataframe(filtered_df)
-# Agregar gráfica de línea temporal para "Delay Time" vs "Taper fecha_date"
-# Agregar gráfica de línea temporal para "Delay Time" vs "Taper fecha_date" diferenciando por "Bottleneck"
-st.subheader("Tendencia de Delay Time en el Tiempo por Bottleneck")
+#Linea temporal
+st.markdown('<div id="linea-de-tiempo"></div>', unsafe_allow_html=True)
+st.subheader("Tendencias en el Tiempo")
 if not filtered_df.empty:
-    # Verificar que las columnas necesarias existan
+
     if 'Delay Time' in filtered_df.columns and 'Taper fecha_date' in filtered_df.columns and 'Bottleneck' in filtered_df.columns:
         fig, ax = plt.subplots(figsize=(10, 5))
-        filtered_df = filtered_df.sort_values('Taper fecha_date')  # Ordenar por fecha
-
+        filtered_df = filtered_df.sort_values('Taper fecha_date')  
+        
         # Diferenciar por Bottleneck si no se seleccionó "Todos"
         if "Todos" not in bottleneck_seleccionados:
             for bottleneck in filtered_df['Bottleneck'].unique():
@@ -241,4 +301,8 @@ if not filtered_df.empty:
     else:
         st.warning("No se encuentran las columnas necesarias ('Delay Time', 'Taper fecha_date', y/o 'Bottleneck') en los datos filtrados.")
 else:
-    st.warning("No hay datos que coincidan con los filtros seleccionados para graficar la tendencia de 'Delay Time'.")
+    st.warning("No hay datos que coincidan con los filtros seleccionados para graficar la tendencia de 'Delay Time'.")
+# Sección de Datos Filtrados
+st.markdown('<div id="datos-filtrados"></div>', unsafe_allow_html=True)
+st.title("Datos Filtrados")
+st.dataframe(filtered_df)
