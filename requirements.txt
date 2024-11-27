@@ -2,4 +2,4 @@ streamlit==1.26.0
 pandas
 matplotlib
 seaborn
-pillow==10.0.1
+pillow>=7.1.0,<10
