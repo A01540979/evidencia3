@@ -4,10 +4,8 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 
-# Configuración general de la página
 st.set_page_config(page_title="Ternium - Cuellos de Botella", page_icon="CamporaFavicon.ico", layout="wide")
 
-# CSS personalizado para mejorar el diseño
 st.markdown("""
     <style>
         /* Sidebar en el lado derecho */
@@ -96,10 +94,10 @@ with st.sidebar:
     demorado_filter = st.selectbox(
         '¿Demorado?',
         [0, 1],
-        index=st.session_state.get("demorado_filter", 0),  # Usa el estado guardado o valor inicial
+        index=st.session_state.get("demorado_filter", 0),
         format_func=lambda x: 'Sí (1)' if x == 1 else 'No (0)'
     )
-    st.session_state["demorado_filter"] = demorado_filter  # Actualiza el estado
+    st.session_state["demorado_filter"] = demorado_filter
 
     # Filtro para interrupción
     interrupcion_filter = st.selectbox(
@@ -156,7 +154,7 @@ if "Todos" not in bottleneck_seleccionados:
 st.markdown('<div id="dashboard-de-análisis"></div>', unsafe_allow_html=True)
 st.title("Dashboard de Análisis")
 
-# Función para graficar frecuencia de cuellos de botella 
+# Función cuellos de botella 
 def plot_bottleneck_frequency(filtered_df, title):
     fig, ax = plt.subplots(figsize=(6, 4))
     barplot = sns.countplot(
@@ -175,7 +173,7 @@ def plot_bottleneck_frequency(filtered_df, title):
     ax.set_xlabel('Bottleneck', fontsize=12)
     ax.set_ylabel('Frecuencia', fontsize=12)
     
-    # Configurar el estilo del gráfico
+    # Configurar el estilo
     ax.grid(axis='y', linestyle='--', alpha=0.7)
     plt.xticks(rotation=45, fontsize=10)
     plt.yticks(fontsize=10)
@@ -183,18 +181,16 @@ def plot_bottleneck_frequency(filtered_df, title):
     
     return fig
 
-# Función para graficar frecuencia de los 15 valores más comunes de Delay Concept
+# Función Delay Concept--------------------
 def plot_delay_concept_bubble_optimized(filtered_df, title):
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Obtener los 15 valores más frecuentes
     top_15_delays = filtered_df['Delay Concept'].value_counts().head(15)
     top_15_df = pd.DataFrame({
         'Delay Concept': top_15_delays.index,
         'Frecuencia': top_15_delays.values
     })
 
-    # Crear coordenadas para las burbujas distribuidas en un grid
     x_coords = np.linspace(0, 1, len(top_15_df)) 
     y_coords = np.linspace(0.3, 0.7, len(top_15_df))  
     np.random.shuffle(y_coords)  
@@ -224,7 +220,6 @@ def plot_delay_concept_bubble_optimized(filtered_df, title):
             bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, boxstyle="round,pad=0.3")
         )
 
-    # Configurar el gráfico
     ax.set_title(title, fontsize=14, color="#FFD700", pad=20)
     ax.set_xticks([]) 
     ax.set_yticks([]) 
@@ -257,6 +252,7 @@ for i, col in enumerate(cols[2:], 1):
     with col:
         st.subheader(f"Gráfico Falso {i}")
         st.pyplot(plot_bottleneck_frequency(filtered_df, f"Gráfico {i}"))
+
 #Linea temporal
 st.markdown('<div id="linea-de-tiempo"></div>', unsafe_allow_html=True)
 st.subheader("Tendencias en el Tiempo")
@@ -266,7 +262,6 @@ if not filtered_df.empty:
         fig, ax = plt.subplots(figsize=(10, 5))
         filtered_df = filtered_df.sort_values('Taper fecha_date')  
         
-        # Diferenciar por Bottleneck si no se seleccionó "Todos"
         if "Todos" not in bottleneck_seleccionados:
             for bottleneck in filtered_df['Bottleneck'].unique():
                 subset = filtered_df[filtered_df['Bottleneck'] == bottleneck]
@@ -279,7 +274,6 @@ if not filtered_df.empty:
                     linewidth=1.5
                 )
         else:
-            # Graficar todo en un solo color si "Todos" está seleccionado
             ax.plot(
                 filtered_df['Taper fecha_date'], 
                 filtered_df['Delay Time'], 
@@ -302,7 +296,7 @@ if not filtered_df.empty:
         st.warning("No se encuentran las columnas necesarias ('Delay Time', 'Taper fecha_date', y/o 'Bottleneck') en los datos filtrados.")
 else:
     st.warning("No hay datos que coincidan con los filtros seleccionados para graficar la tendencia de 'Delay Time'.")
-# Sección de Datos Filtrados
+
 st.markdown('<div id="datos-filtrados"></div>', unsafe_allow_html=True)
 st.title("Datos Filtrados")
 st.dataframe(filtered_df)
