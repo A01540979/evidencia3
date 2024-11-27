@@ -144,7 +144,7 @@ with st.sidebar:
     )
 
     # Filtro para Bottleneck
-    st.subheader("Filtrar por Bottleneck")
+    st.subheader("Filtrar por Cuello de Botella")
     if 'Bottleneck' in df.columns:
         bottleneck_seleccionados = st.multiselect(
             "Selecciona las categorías:",
@@ -195,7 +195,7 @@ def plot_bottleneck_frequency(filtered_df, title):
         ax.bar_label(container, fmt=lambda x: f'{x/1000:.1f}K', label_type='edge', fontsize=10, color='black', padding=3)
 
     # Configurarción etiquetas
-    ax.set_xlabel('Bottleneck', fontsize=12)
+    ax.set_xlabel('Cuellos de Botella', fontsize=12)
     ax.set_ylabel('Frecuencia', fontsize=12)
     
     # Configurar el estilo
@@ -311,7 +311,7 @@ cols = st.columns(3)
 with cols[0]:
     st.subheader("Frecuencia: Cuellos de Botella")
     if not filtered_df.empty:
-        st.pyplot(plot_bottleneck_frequency(filtered_df, "Frecuencia por Bottleneck"))
+        st.pyplot(plot_bottleneck_frequency(filtered_df, "Frecuencia por Cuello de Bottella"))
     else:
         st.warning("No hay datos que coincidan con los filtros seleccionados.")
 
@@ -356,7 +356,7 @@ if not filtered_df.empty:
                 filtered_df['Delay Time'] / 3600, 
                 marker='o', 
                 color='orange', 
-                label="Todos los Bottleneck", 
+                label="Todos los Cuellos de Bottella", 
                 linestyle='-', 
                 linewidth=1.5
             )
@@ -365,7 +365,7 @@ if not filtered_df.empty:
         ax.set_ylabel("Delay Time (horas)", fontsize=12)
         ax.grid(axis='y', linestyle='--', alpha=0.7)
         ax.tick_params(axis='x', rotation=45)
-        ax.legend(title="Bottleneck", loc="upper left", fontsize=10)
+        ax.legend(title="Cuellos de botella", loc="upper left", fontsize=10)
         sns.despine(left=True, bottom=True)
         st.pyplot(fig)
     else:
